@@ -1,24 +1,30 @@
 const router = require('express').Router()
 const { Blog } = require('../models')
+const ApiError = require('../error/ApiError')
 router.get('/', async (req, res) => {
 	const blogs = await Blog.findAll()
 	res.json(blogs)
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
 	const id = req.params.id
-	try {
-		const blog = await Blog.findByPk(id)
-		blog.likes = req.body.likes
-		await blog.save()
-		return res.json({
-			likes: blog.likes,
-		})
-	} catch (error) {
-		return res.status(404).json({
-			error,
-		})
+	const blog = await Blog.findByPk(id)
+
+	if (blog === null) {
+		next(
+			ApiError.notFound('could not find a blog with the given id on the server')
+		)
+		return
+	} else if (req.body.likes === null || !/\d+/.test(req.body.likes)) {
+		next(ApiError.badRequest('Invalid or missing number of likes'))
+		return
 	}
+
+	blog.likes = req.body.likes
+	await blog.save()
+	return res.json({
+		likes: blog.likes,
+	})
 })
 
 router.delete('/:id', async (req, res) => {
@@ -31,14 +37,14 @@ router.delete('/:id', async (req, res) => {
 		return res.status(400).json({ err })
 	}
 })
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
 	const new_blog = req.body
-	try {
-		const new_blog_1 = await Blog.create(new_blog)
-		return res.json(new_blog_1)
-	} catch (err) {
-		return res.status(400).json({ err })
-	}
+
+	Blog.create(new_blog)
+		.then((entity) => {
+			res.json(entity)
+		})
+		.catch((err) => next(ApiError.badRequest(err.message)))
 })
 
 module.exports = router

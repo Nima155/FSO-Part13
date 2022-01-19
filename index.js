@@ -4,9 +4,10 @@ const { PORT } = require('./utils/config')
 const { connectToDatabase } = require('./utils/db')
 const app = express()
 const blogsRouter = require('./controllers/blogs')
-
+const apiErrorHandler = require('./error/apiErrorHandler')
 app.use(express.json())
 app.use('/api/blogs', blogsRouter)
+app.use(apiErrorHandler)
 
 const start = async () => {
 	await connectToDatabase()
