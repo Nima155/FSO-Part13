@@ -4,6 +4,23 @@ router.get('/', async (req, res) => {
 	const blogs = await Blog.findAll()
 	res.json(blogs)
 })
+
+router.put('/:id', async (req, res) => {
+	const id = req.params.id
+	try {
+		const blog = await Blog.findByPk(id)
+		blog.likes = req.body.likes
+		await blog.save()
+		return res.json({
+			likes: blog.likes,
+		})
+	} catch (error) {
+		return res.status(404).json({
+			error,
+		})
+	}
+})
+
 router.delete('/:id', async (req, res) => {
 	const id = req.params.id
 	try {
