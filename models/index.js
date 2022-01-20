@@ -1,7 +1,12 @@
 const Blog = require('./blog')
+const User = require('./user')
 
-Blog.sync() // automatically creates the table if it does not exist...
+User.hasMany(Blog)
+Blog.hasOne(User)
 
+User.sync({ alter: true })
+Blog.sync({ alter: true }) // automatically creates the table if it does not exist...
 module.exports = {
 	Blog,
+	User,
 }
