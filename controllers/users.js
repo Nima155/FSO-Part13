@@ -2,12 +2,12 @@ const router = require('express').Router()
 const { User } = require('../models/index')
 const ApiError = require('../error/ApiError')
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
 	try {
 		const newUser = await User.create(req.body)
 		return res.json(newUser)
 	} catch (err) {
-		res.status(400).json({ error: err.message })
+		next(ApiError.badRequest(err.message))
 	}
 })
 
