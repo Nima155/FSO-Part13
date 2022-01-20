@@ -18,16 +18,8 @@ router.get('/', async (_, res) => {
 
 router.put('/:username', async (req, res, next) => {
 	const wantedUser = await User.findOne({
-		// old username
 		where: {
 			username: req.params.username,
-		},
-	})
-
-	const newOneOnServer = await User.findOne({
-		// new username
-		where: {
-			username: req.body.username,
 		},
 	})
 
@@ -40,7 +32,7 @@ router.put('/:username', async (req, res, next) => {
 		return
 	}
 
-	wantedUser.username = req.body.username
+	wantedUser.name = req.body.name
 	const user = await wantedUser.save()
 	res.json(user)
 })
