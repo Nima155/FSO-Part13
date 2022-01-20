@@ -23,13 +23,12 @@ router.put('/:username', async (req, res, next) => {
 		},
 	})
 
-	if (!req.body.name) {
-		next(ApiError.badRequest('missing name field'))
-		return
-	}
-
-	if (!wantedUser) {
-		next(ApiError.notFound('Username does not exist!'))
+	if (!wantedUser || !req.body.name) {
+		next(
+			!wantedUser
+				? ApiError.notFound('Username does not exist!')
+				: ApiError.badRequest('missing name field')
+		)
 		return
 	}
 
