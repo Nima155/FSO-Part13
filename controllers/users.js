@@ -23,12 +23,8 @@ router.put('/:username', async (req, res, next) => {
 		},
 	})
 
-	if (!wantedUser || newOneOnServer) {
-		next(
-			!wantedUser
-				? ApiError.notFound('Username does not exist!')
-				: ApiError.badRequest('Username taken!')
-		)
+	if (!wantedUser) {
+		next(ApiError.notFound('Username does not exist!'))
 		return
 	}
 
