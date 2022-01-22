@@ -6,7 +6,7 @@ const { SECRET } = require('../utils/config')
 
 const tokenVerifier = async (req, res, next) => {
 	const authorization = req.get('authorization')
-	console.log(authorization)
+
 	if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
 		try {
 			req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
@@ -45,10 +45,16 @@ router.put('/:id', async (req, res, next) => {
 	})
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', tokenVerifier, async (req, res, next) => {
 	const id = req.params.id
 	try {
 		const blog = await Blog.findByPk(id)
+		if (!(blog.userId === req.decodedToken.id)) {
+			next(
+				ApiError.unauthorized('Only the author of the blog can remove the blog')
+			)
+			return
+		}
 		await blog.destroy()
 		return res.status(200).end()
 	} catch (err) {
