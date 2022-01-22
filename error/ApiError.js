@@ -9,6 +9,9 @@ class ApiError {
 	static badRequest(msg) {
 		return new ApiError(400, msg)
 	}
+	static unauthorized(msg) {
+		return new ApiError(401, msg)
+	}
 }
 
 module.exports = ApiError

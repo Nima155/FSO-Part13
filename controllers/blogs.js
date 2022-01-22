@@ -1,6 +1,24 @@
 const router = require('express').Router()
-const { Blog } = require('../models')
+const { Blog, User } = require('../models')
 const ApiError = require('../error/ApiError')
+const jwt = require('jsonwebtoken')
+const { SECRET } = require('../utils/config')
+
+const tokenVerifier = async (req, res, next) => {
+	const authorization = req.get('authorization')
+	console.log(authorization)
+	if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+		try {
+			req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
+		} catch (err) {
+			next(ApiError.unauthorized('Invalid token'))
+		}
+	} else {
+		next(ApiError.badRequest('missing token!'))
+	}
+	next()
+}
+
 router.get('/', async (req, res) => {
 	const blogs = await Blog.findAll()
 	res.json(blogs)
@@ -37,14 +55,18 @@ router.delete('/:id', async (req, res) => {
 		return res.status(400).json({ err })
 	}
 })
-router.post('/', async (req, res, next) => {
+router.post('/', tokenVerifier, async (req, res, next) => {
 	const new_blog = req.body
-
-	Blog.create(new_blog)
-		.then((entity) => {
-			res.json(entity)
-		})
-		.catch((err) => next(ApiError.badRequest(err.message)))
+	const foundUser = await User.findByPk(req.decodedToken.id)
+	if (foundUser) {
+		Blog.create({ ...new_blog, userId: foundUser.id })
+			.then((entity) => {
+				res.json(entity)
+			})
+			.catch((err) => next(ApiError.badRequest(err.message)))
+	} else {
+		next(ApiError.notFound('No such user exists on the database!'))
+	}
 })
 
 module.exports = router
