@@ -24,15 +24,27 @@ router.get('/', async (req, res) => {
 	const where = {}
 
 	if (req.query.search) {
-		where.title = {
-			[Op.iLike]: `%${req.query.search}%`,
-		}
+		const searchString = `%${req.query.search}%`
+
+		where[Op.or] = [
+			{
+				title: {
+					[Op.iLike]: searchString,
+				},
+			},
+			{
+				author: {
+					[Op.iLike]: searchString,
+				},
+			},
+		]
 	}
 
 	const blogs = await Blog.findAll({
 		attributes: { exclude: 'userId' },
 		include: { model: User, attributes: ['username', 'name'] },
 		where,
+		order: [['likes', 'DESC']],
 	})
 	res.json(blogs)
 })
