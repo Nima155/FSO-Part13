@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { User } = require('../models/index')
+const { User, Blog } = require('../models/index')
 const ApiError = require('../error/ApiError')
 
 router.post('/', async (req, res, next) => {
@@ -12,7 +12,12 @@ router.post('/', async (req, res, next) => {
 })
 
 router.get('/', async (_, res) => {
-	const allUsers = await User.findAll()
+	const allUsers = await User.findAll({
+		include: {
+			model: Blog,
+			attributes: ['title', 'author'],
+		},
+	})
 	return res.json(allUsers)
 })
 
