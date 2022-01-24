@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const { sequelize } = require('../utils/db')
 const sqlz = require('sequelize')
-const { Blog } = require('../models/index')
+
 router.get('/', async (req, res) => {
 	const data = await sequelize.query(
 		'SELECT author, COUNT(*) as articles , SUM(likes) as likes from blogs GROUP BY author ORDER BY likes DESC',
