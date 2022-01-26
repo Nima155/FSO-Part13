@@ -1,7 +1,31 @@
 const router = require('express').Router()
-// const { tokenVerifier } = require('../utils/middleware')
+const { tokenVerifier } = require('../utils/middleware')
 const { ReadingList, User, Blog } = require('../models/index')
 const ApiError = require('../error/ApiError')
+router.put('/:id', tokenVerifier, async (req, res, next) => {
+	const { read } = req.body
+
+	const entry = await ReadingList.findByPk(req.params.id)
+
+	if (!entry) {
+		next(ApiError.badRequest('no entry with the given id'))
+		return
+	}
+
+	if (entry.userId !== req.decodedToken.id) {
+		next(ApiError.unauthorized('Unauthorized!'))
+		return
+	}
+
+	try {
+		entry.read = read
+		const newEntry = await entry.save()
+		return res.json(newEntry)
+	} catch (err) {
+		next(ApiError.badRequest(err.message))
+	}
+})
+
 router.post(
 	'/',
 	/*, tokenVerifier,*/ async (req, res, next) => {
