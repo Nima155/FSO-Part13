@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { User, Blog } = require('../models/index')
+const { User, Blog, ReadingList } = require('../models/index')
 const ApiError = require('../error/ApiError')
 
 router.post('/', async (req, res, next) => {
@@ -19,6 +19,25 @@ router.get('/', async (_, res) => {
 		},
 	})
 	return res.json(allUsers)
+})
+
+router.get('/:id', async (req, res) => {
+	const id = req.params.id
+
+	const user = await User.findByPk(id, {
+		attributes: ['name', 'username'],
+		include: [
+			{
+				model: Blog,
+				attributes: ['id', 'title', 'author', 'year', 'likes', 'url'],
+				through: {
+					attributes: ['id', 'read'],
+				},
+				as: 'readings',
+			},
+		],
+	})
+	return res.json(user)
 })
 
 router.put('/:username', async (req, res, next) => {
