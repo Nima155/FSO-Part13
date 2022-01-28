@@ -18,13 +18,14 @@ router.post('/', async (req, res, next) => {
 		next(ApiError.unauthorized('Incorrect username or password!'))
 		return
 	}
+	req.session.userId = user.id // creates session on the database and sets a cookie for the client browser
 
 	const tokenContent = {
 		username: user.username,
 		id: user.id,
 	}
 
-	const actualToken = jwt.sign(tokenContent, SECRET)
+	const actualToken = jwt.sign(tokenContent, SECRET) // redundant...
 
 	res.status(200).send({ actualToken, name: user.name })
 })

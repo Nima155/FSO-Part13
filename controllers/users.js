@@ -11,8 +11,9 @@ router.post('/', async (req, res, next) => {
 	}
 })
 
-router.get('/', async (_, res) => {
+router.get('/', async (req, res) => {
 	const allUsers = await User.findAll({
+		attributes: { exclude: ['disabled'] },
 		include: {
 			model: Blog,
 			attributes: ['title', 'author'],

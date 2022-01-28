@@ -3,11 +3,16 @@ const { Blog, User } = require('../models')
 const { Op } = require('sequelize')
 const ApiError = require('../error/ApiError')
 
-const { tokenVerifier } = require('../utils/middleware')
+const {
+	tokenVerifier,
+	sessionVerifier,
+	loginRequired,
+	userBanned,
+} = require('../utils/middleware')
 
 router.get('/', async (req, res) => {
 	const where = {}
-
+	console.log(req.session)
 	if (req.query.search) {
 		const searchString = `%${req.query.search}%`
 
@@ -55,34 +60,50 @@ router.put('/:id', async (req, res, next) => {
 	})
 })
 
-router.delete('/:id', tokenVerifier, async (req, res, next) => {
-	const id = req.params.id
-	try {
-		const blog = await Blog.findByPk(id)
-		if (!(blog.userId === req.decodedToken.id)) {
-			next(
-				ApiError.unauthorized('Only the author of the blog can remove the blog')
-			)
-			return
+router.delete(
+	'/:id',
+	sessionVerifier,
+	loginRequired,
+	userBanned,
+	tokenVerifier,
+	async (req, res, next) => {
+		const id = req.params.id
+		try {
+			const blog = await Blog.findByPk(id)
+			if (!(blog.userId === req.decodedToken.id)) {
+				next(
+					ApiError.unauthorized(
+						'Only the author of the blog can remove the blog'
+					)
+				)
+				return
+			}
+			await blog.destroy()
+			return res.status(200).end()
+		} catch (err) {
+			return res.status(400).json({ err })
 		}
-		await blog.destroy()
-		return res.status(200).end()
-	} catch (err) {
-		return res.status(400).json({ err })
 	}
-})
-router.post('/', tokenVerifier, async (req, res, next) => {
-	const new_blog = req.body
-	const foundUser = await User.findByPk(req.decodedToken.id)
-	if (foundUser) {
-		Blog.create({ ...new_blog, userId: foundUser.id })
-			.then((entity) => {
-				res.json(entity)
-			})
-			.catch((err) => next(ApiError.badRequest(err.message)))
-	} else {
-		next(ApiError.notFound('No such user exists on the database!'))
+)
+router.post(
+	'/',
+	sessionVerifier,
+	loginRequired,
+	userBanned,
+	tokenVerifier,
+	async (req, res, next) => {
+		const new_blog = req.body
+		const foundUser = await User.findByPk(req.decodedToken.id)
+		if (foundUser) {
+			Blog.create({ ...new_blog, userId: foundUser.id })
+				.then((entity) => {
+					res.json(entity)
+				})
+				.catch((err) => next(ApiError.badRequest(err.message)))
+		} else {
+			next(ApiError.notFound('No such user exists on the database!'))
+		}
 	}
-})
+)
 
 module.exports = router
